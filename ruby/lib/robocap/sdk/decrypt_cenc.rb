@@ -16,12 +16,18 @@ module RobocapCenc
     module DecryptCenc
       module_function
 
-      def call(mp4_path:, user_private_pem:, output_dir:,
-               sdk_root: nil, ffprobe_executable: nil, ffmpeg_executable: nil)
+      def call(mp4_path:, user_private_pem:, output_dir:, metadata: nil,
+               sdk_root: nil, session_device_id: nil,
+               ffprobe_executable: nil, ffmpeg_executable: nil)
         mp4_path   = Pathname(mp4_path)
         output_dir = Pathname(output_dir)
 
-        meta = Mp4Cenc.load_cenc_metadata(mp4_path, ffprobe_executable: ffprobe_executable)
+        meta = metadata ||
+               Mp4Cenc.load_cenc_metadata(mp4_path, ffprobe_executable: ffprobe_executable)
+
+        unless session_device_id.nil?
+          Mp4Cenc.verify_session_device_id_from_metadata(session_device_id, meta)
+        end
 
         root = Pathname(sdk_root || Config.default_sdk_root)
         vault = KeyVault.new(root)

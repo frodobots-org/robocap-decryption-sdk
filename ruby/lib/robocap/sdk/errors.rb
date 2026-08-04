@@ -33,6 +33,7 @@ module RobocapCenc
       ERR_CENC_FFPROBE_FAILED       = 7009
       ERR_CENC_CUSTOMER_ID_INVALID  = 7010
       ERR_CENC_CEKA_TRIAL_FAILED    = 7011
+      ERR_DEVICE_BINDING_MISMATCH   = 7012
 
       NAMES = constants.each_with_object({}) do |c, h|
         v = const_get(c)

@@ -60,7 +60,11 @@ Also required: `cenc_cek_wrapped_b64` (Base64 of 256-byte RSA-OAEP wrapped CEK).
 
 Import/delete CLI still use `--customer-id`; that value is the **vault directory name** and should match the Device ID that videos will resolve to (`deviceid` / `host` as above).
 
-**Breaking in 2.0.0:** the old fallback tag `username` is removed. Videos that only carry `username` must be re-tagged or renamed/processed under the rules above.
+**Breaking in 2.1.0:** the old fallback tag `username` is removed. Videos that only carry `username` must be re-tagged or renamed/processed under the rules above.
+
+The full cross-SDK contract for these tags — including the optional session
+device binding (`ERR_DEVICE_BINDING_MISMATCH`) — is specified in
+[`../spec/cenc-tags.md`](../spec/cenc-tags.md).
 
 This Python package is **local-vault only** (no cloud key fetch / cloud decrypt path).
 
