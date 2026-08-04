@@ -7,6 +7,8 @@ implementations.
 
 ## Documents
 
+- `cenc-tags.md` — MP4 format tags, product-line detection, vault customer-id
+  resolution, and optional session device binding.
 - `cenc-format.md` — CENC-encrypted MP4 binary layout, RSA-OAEP parameters,
   AES-CTR scheme, and CEK wrapping rules. *(TODO — extract from current Python
   implementation.)*

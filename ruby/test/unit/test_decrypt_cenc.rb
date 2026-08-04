@@ -84,6 +84,61 @@ class TestDecryptCenc < Minitest::Test
     assert_equal RobocapCenc::SDK::ErrorCode::ERR_CENC_CEKA_TRIAL_FAILED, err.code
   end
 
+  def test_decrypt_accepts_preparsed_metadata_without_reprobing
+    import_rsa_v1(@tmp, 'CENC_CUST', TestHelpers::EMBEDDED_CENC_PUBLIC_PEM, TestHelpers::EMBEDDED_CENC_PRIVATE_PEM)
+    tags = build_cenc_tag_payload(
+      TestHelpers::EMBEDDED_CENC_PUBLIC_PEM, TestHelpers::EMBEDDED_CENC_PRIVATE_PEM, customer_id: 'CENC_CUST',
+    )
+    meta = RobocapCenc::SDK::Mp4Cenc.parse_cenc_metadata_from_tags(tags)
+
+    # load_cenc_metadata is stubbed to raise: passing `metadata:` must skip it.
+    result = RobocapCenc::SDK::Mp4Cenc.stub :load_cenc_metadata, ->(*) { raise 'should not reprobe' } do
+      RobocapCenc::SDK::FfmpegCli.stub :resolve_ffmpeg_executable, ->(_x = nil) { 'ffmpeg' } do
+        RobocapCenc::SDK::FfmpegCli.stub :open3_capture3, ->(*_a) { ['', '', Struct.new(:exitstatus).new(0)] } do
+          RobocapCenc::SDK::DecryptCenc.call(
+            mp4_path: @mp4, user_private_pem: TestHelpers::EMBEDDED_CENC_PRIVATE_PEM,
+            output_dir: @out, sdk_root: @tmp, metadata: meta,
+          )
+        end
+      end
+    end
+    assert_equal 'CENC_CUST', result.customer_id
+  end
+
+  def test_decrypt_rejects_mismatched_session_device_id
+    import_rsa_v1(@tmp, 'CENC_CUST', TestHelpers::EMBEDDED_CENC_PUBLIC_PEM, TestHelpers::EMBEDDED_CENC_PRIVATE_PEM)
+    tags = build_cenc_tag_payload(
+      TestHelpers::EMBEDDED_CENC_PUBLIC_PEM, TestHelpers::EMBEDDED_CENC_PRIVATE_PEM, customer_id: 'CENC_CUST',
+    )
+    tags['deviceid'] = 'CENC_CUST'
+
+    err = assert_raises(RobocapCenc::SDK::Error) do
+      stub_pipeline(tags) do
+        RobocapCenc::SDK::DecryptCenc.call(
+          mp4_path: @mp4, user_private_pem: TestHelpers::EMBEDDED_CENC_PRIVATE_PEM,
+          output_dir: @out, sdk_root: @tmp, session_device_id: 'SOMEONE_ELSE',
+        )
+      end
+    end
+    assert_equal RobocapCenc::SDK::ErrorCode::ERR_DEVICE_BINDING_MISMATCH, err.code
+  end
+
+  def test_decrypt_accepts_matching_session_device_id
+    import_rsa_v1(@tmp, 'CENC_CUST', TestHelpers::EMBEDDED_CENC_PUBLIC_PEM, TestHelpers::EMBEDDED_CENC_PRIVATE_PEM)
+    tags = build_cenc_tag_payload(
+      TestHelpers::EMBEDDED_CENC_PUBLIC_PEM, TestHelpers::EMBEDDED_CENC_PRIVATE_PEM, customer_id: 'CENC_CUST',
+    )
+    tags['deviceid'] = 'CENC_CUST'
+
+    result = stub_pipeline(tags) do
+      RobocapCenc::SDK::DecryptCenc.call(
+        mp4_path: @mp4, user_private_pem: TestHelpers::EMBEDDED_CENC_PRIVATE_PEM,
+        output_dir: @out, sdk_root: @tmp, session_device_id: 'CENC_CUST',
+      )
+    end
+    assert_equal 'CENC_CUST', result.customer_id
+  end
+
   def test_decrypt_customer_not_in_vault
     import_rsa_v1(@tmp, 'CENC_CUST', TestHelpers::EMBEDDED_CENC_PUBLIC_PEM, TestHelpers::EMBEDDED_CENC_PRIVATE_PEM)
     tags = build_cenc_tag_payload(

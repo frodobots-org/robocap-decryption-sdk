@@ -7,7 +7,7 @@ from pathlib import Path
 
 DEFAULT_SDK_ROOT: Path = Path(
     os.environ.get(
-        "robocap_decryption_sdk_ROOT",
+        "ROBOCAP_SDK_ROOT",
         Path.home() / ".robocap-sdk",
     )
 )

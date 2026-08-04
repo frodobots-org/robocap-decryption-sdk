@@ -35,6 +35,7 @@ class TestErrors < Minitest::Test
     ERR_CENC_FFPROBE_FAILED:       7009,
     ERR_CENC_CUSTOMER_ID_INVALID:  7010,
     ERR_CENC_CEKA_TRIAL_FAILED:    7011,
+    ERR_DEVICE_BINDING_MISMATCH:   7012,
   }.freeze
 
   def test_error_code_integers_match_python
@@ -45,11 +46,11 @@ class TestErrors < Minitest::Test
     end
   end
 
-  def test_error_code_count_is_30
+  def test_error_code_count_is_31
     int_consts = RobocapCenc::SDK::ErrorCode.constants.select do |c|
       RobocapCenc::SDK::ErrorCode.const_get(c).is_a?(Integer)
     end
-    assert_equal 30, int_consts.length
+    assert_equal 31, int_consts.length
   end
 
   def test_name_for_returns_constant_name
