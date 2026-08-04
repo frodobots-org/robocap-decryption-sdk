@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from robocap_decryption_sdk.vault.layout import atomic_write_text
+
 from robocap_web.storage.paths import TenantPathResolver
 from robocap_web.tasks.models import TaskRecord
 
@@ -14,7 +16,9 @@ class TaskStore:
     def save(self, record: TaskRecord) -> None:
         record.touch()
         path = self._paths.task_file(record.task_id)
-        path.write_text(record.model_dump_json(indent=2), encoding="utf-8")
+        # Atomic: the worker thread saves progress while the request thread
+        # polls load(), and a truncating write exposes a zero-length file.
+        atomic_write_text(path, record.model_dump_json(indent=2))
         self._append_index(record)
 
     def load(self, task_id: str) -> TaskRecord | None:
@@ -40,7 +44,7 @@ class TaskStore:
                 "created_at": record.created_at.isoformat(),
             }
         )
-        index_path.write_text(json.dumps(entries, indent=2), encoding="utf-8")
+        atomic_write_text(index_path, json.dumps(entries, indent=2))
 
     def list_recent(self, user_id: str, limit: int = 20) -> list[TaskRecord]:
         index_path = self._paths.user_task_index(user_id)
