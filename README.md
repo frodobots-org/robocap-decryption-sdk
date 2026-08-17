@@ -33,7 +33,7 @@ updating `spec/` and both SDKs in the same PR.
 
 ```bash
 # Python
-cd python && pip install -e ".[dev,web]" && pytest
+cd python && pip install -e ".[dev]" && pytest
 
 # Ruby
 cd ruby && bundle install && bundle exec rake test
