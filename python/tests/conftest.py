@@ -43,21 +43,3 @@ def customer_setup(sdk_root: Path) -> dict:
         "private_pem": private_pem,
         "vault": vault,
     }
-
-
-@pytest.fixture
-def web_client(tmp_path: Path):
-    import os
-
-    from fastapi.testclient import TestClient
-
-    from robocap_web.config import Settings
-    from robocap_web.main import create_app
-
-    os.environ["DEV_MODE"] = "true"
-    os.environ["ROBOCAP_WEB_MODE"] = "local"
-    os.environ["ROBOCAP_DATA_ROOT"] = str(tmp_path / "data")
-    settings = Settings()
-    app = create_app(settings)
-    with TestClient(app) as client:
-        yield client

@@ -4,7 +4,6 @@ Python implementation of the Robocap customer-side decryption SDK. It provides:
 
 - A core SDK package for RSA key vault operations and CENC MP4 decryption.
 - Customer-facing interactive commands for import, decrypt, and delete flows.
-- A FastAPI backend for local/web clients that need the same operations over HTTP.
 
 The shared vault layout, CENC metadata format, and cross-language expectations live in the repository-level [`../spec/`](../spec) directory.
 
@@ -24,16 +23,10 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-For development and the full test suite, install both optional extras:
+For development and the full test suite, install the `dev` extra:
 
 ```bash
-pip install -e ".[dev,web]"
-```
-
-Install only the web dependencies when running the FastAPI backend:
-
-```bash
-pip install -e ".[web]"
+pip install -e ".[dev]"
 ```
 
 ## Package Layout
@@ -41,9 +34,8 @@ pip install -e ".[web]"
 ```text
 src/robocap_decryption_sdk/   Core SDK: vault layout, RSA import/delete, CENC decrypt
 src/robocap_customer/         Interactive customer CLI workflows and batch decrypt
-src/robocap_web/              FastAPI app, auth middleware, task store, SSE progress
 scripts/                      Utility scripts for key generation/import/diagnostics
-tests/                        Unit tests for SDK, customer flows, and web endpoints
+tests/                        Unit tests for SDK and customer flows
 ```
 
 ## Device ID and MP4 tags (v2)
@@ -138,61 +130,23 @@ Main operations:
 - `decrypt_cenc_mp4(...)` — reads Device ID from MP4 tags; optional `session_device_id` binding
 - `verify_customer_private_key(...)`
 
-SDK errors are raised as `RobocapError` and include structured error codes for CLI/API callers.
+SDK errors are raised as `RobocapError` and include structured error codes for CLI callers.
 
-## FastAPI Backend
-
-The `robocap_web` package exposes the same customer workflows over HTTP.
-
-```bash
-DEV_MODE=true ROBOCAP_WEB_MODE=local robocap-web
-```
-
-Equivalent explicit command:
-
-```bash
-DEV_MODE=true ROBOCAP_WEB_MODE=local \
-  uvicorn robocap_web.main:app --reload --port 8000
-```
-
-Important settings:
-
-| Environment variable | Purpose |
-|----------------------|---------|
-| `DEV_MODE` | Enables local development behavior, including local browse endpoints |
-| `ROBOCAP_WEB_MODE` | `local` by default; non-local mode rejects insecure default secrets |
-| `ROBOCAP_DATA_ROOT` | Directory for task JSON state; defaults to `./data` |
-| `ROBOCAP_WEB_USER` | Web username; defaults to `frodobot` |
-| `ROBOCAP_WEB_PASSWORD` | Web password; default allowed only in local/dev use |
-| `ROBOCAP_SESSION_SECRET` | Session signing secret; must be changed outside local/dev use |
-| `ROBOCAP_BROWSE_ROOTS` | Semicolon-separated allowed roots for local browsing |
-
-Primary API groups:
-
-```text
-GET  /api/health
-/api/auth
-/api/customers
-/api/import
-/api/delete
-/api/decrypt
-/api/local
-```
-
-Decrypt tasks run asynchronously and expose task status plus SSE events under `/api/decrypt/tasks/{task_id}`.
-
-This repository does not include a bundled frontend under `python/`; the web package is the backend/API layer.
+This SDK is offline and local-only. It ships no HTTP server and no network
+listener. Exposing these operations over a network is out of scope for this
+repository; if you build a service on top of the SDK, authentication and
+authorization are your responsibility.
 
 ## Tests
 
 Run the full Python test suite from the `python/` directory:
 
 ```bash
-pip install -e ".[dev,web]"
+pip install -e ".[dev]"
 pytest
 ```
 
-The tests cover the core SDK, customer interactive workflows, batch decrypt logic, and FastAPI endpoints.
+The tests cover the core SDK, customer interactive workflows, and batch decrypt logic.
 
 ## Utility Scripts
 
